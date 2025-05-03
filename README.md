@@ -66,7 +66,7 @@ The application will be available at `http://localhost:3000`
 
 - `static/` - Contains static files including JavaScript and CSS
   - `firebase-login.js` - Handles Firebase authentication
-- `task-management-454912-da68d68f3cf1.json` - Google Cloud service account credentials
+- `your-private-key.json` - Google Cloud service account credentials
 - `app.js` - Main application file
 - `package.json` - Project dependencies and scripts
 
@@ -79,7 +79,7 @@ The application will be available at `http://localhost:3000`
 
 ## Security Notes
 
-- Never commit your `task-management-454912-da68d68f3cf1.json` file to version control
+- Never commit your `your-private-key.json` file to version control
 - Keep your Firebase configuration secure
 - Use environment variables for sensitive information
 
