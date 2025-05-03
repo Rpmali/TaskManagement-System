@@ -28,7 +28,7 @@ cd TaskManagement-System
 4. Download your service account key:
    - Go to Project Settings > Service Accounts
    - Click "Generate New Private Key"
-   - Save the downloaded JSON file as `task-management-454912-da68d68f3cf1.json` in your project root
+   - Save the downloaded JSON file as `your-private-key.json` in your project root
 
 ### 3. Configure Firebase
 
