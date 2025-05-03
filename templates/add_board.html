@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Task Board</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <script type="module" src="{{ url_for('static', path='firebase-login.js') }}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1 onclick="window.location.href='/tasks'" style="cursor: pointer;">Task Management</h1>
+        <div class="navbar-right">
+            {% if user_token %}
+            <p>USER: {{ user_token.email }}</p>
+            <button id="logged-out">Logout</button>
+            {% else %}
+            <p>USER: Not logged in</p>
+            <a href="/login"><button id="login-button">Login</button></a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="add-board-container">
+        <div class="add-board-content">
+            <div class="add-board-header">
+                <h2>Create a New Board</h2>
+                <p>Give your board a name to get started</p>
+            </div>
+            <form action="/add-board" method="post" class="add-board-form">
+                <div class="form-group">
+                    <label for="board_name">Board Name</label>
+                    <input type="text" id="board_name" name="board_name" placeholder="Enter board name" required>
+                </div>
+                <div class="form-actions">
+                    <a href="/boards"><button type="button" class="cancel-btn">Cancel</button></a>
+                    <button type="submit" class="create-btn">
+                        <i class="fas fa-plus"></i> Create Board
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

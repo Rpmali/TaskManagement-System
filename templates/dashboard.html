@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Task Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <script type="module" src="{{ url_for('static', path='firebase-login.js') }}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="navbar">
+        <h1>Task Management</h1>
+        <div class="navbar-right">
+            {% if user_token %}
+            <p>USER: {{ user_token.email }}</p>
+            <button id="logged-out">Logout</button>
+            {% else %}
+            <p>USER: Not logged in</p>
+            <a href="/login"><button id="login-button">Login</button></a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Welcome back, {{ user_token.email.split('@')[0] }}!</h1>
+            <a href="/add-board"><button class="add-board-btn"><i class="fas fa-plus"></i> New Board</button></a>
+        </div>
+
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <div class="stat-icon boards">
+                    <i class="fas fa-columns"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Total Boards</h3>
+                    <p>{{ boards|length }}</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon tasks">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Active Tasks</h3>
+                    <p>{{ active_tasks }}</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon completed">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Completed Tasks</h3>
+                    <p>{{ completed_tasks }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>Recent Boards</h2>
+                    <a href="/boards">View All</a>
+                </div>
+                {% if boards %}
+                <div class="recent-boards">
+                    {% for board in boards[:5] %}
+                    <a href="/tasks/{{ board.id }}" class="recent-board-item">
+                        <div class="board-icon">
+                            <i class="fas fa-columns"></i>
+                        </div>
+                        <div class="board-info">
+                            <h3>{{ board.name }}</h3>
+                            <p>Created: {{ board.created_at.strftime('%Y-%m-%d') if board.created_at else 'N/A' }}</p>
+                            {% if board.created_by == user_token.user_id %}
+                                <span class="creator-badge" title="You are the creator"><i class="fas fa-crown"></i></span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-columns"></i>
+                    <p>No boards yet. Create your first board to get started!</p>
+                    <a href="/add-board">Create Board</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2>Recent Tasks</h2>
+                    <a href="/tasks">View All</a>
+                </div>
+                {% if recent_tasks %}
+                <div class="recent-tasks">
+                    {% for task in recent_tasks[:5] %}
+                    <div class="recent-task-item">
+                        <div class="task-status {{ task.status }}"></div>
+                        <div class="task-info">
+                            <h3>{{ task.name }}</h3>
+                            <p>{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
+                            <div class="task-meta">
+                                <span><i class="far fa-calendar"></i> {{ task.due_date.strftime('%Y-%m-%d') if task.due_date else 'No due date' }}</span>
+                                <span><i class="fas fa-columns"></i> {{ task.board_name }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-tasks"></i>
+                    <p>No tasks yet. Add tasks to your boards to track progress!</p>
+                    <a href="/boards">Go to Boards</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

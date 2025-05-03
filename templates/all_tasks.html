@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Tasks - Task Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="module" src="{{ url_for('static', path='firebase-login.js') }}"></script>
+    <style>
+        .task-box {
+            padding: 1.5rem;
+            margin: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .task-box:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .task-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .board-badge {
+            background: #f0f2f5;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #555;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .board-badge:hover {
+            background: #e4e6e9;
+        }
+
+        .task-box h3 {
+            font-size: 1.1rem;
+            margin: 0.75rem 0;
+            color: #2c3e50;
+        }
+
+        .task-description {
+            color: #666;
+            margin: 0.75rem 0;
+            line-height: 1.5;
+        }
+
+        .task-due-date,
+        .task-assignee,
+        .task-completed {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .task-status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 0.75rem;
+        }
+
+        .task-status-badge.todo {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .task-status-badge.done {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .task-actions button {
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: #666;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .task-actions button:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .task-box.completed {
+            background: #fafafa;
+        }
+
+        .task-box.completed h3 {
+            color: #888;
+            text-decoration: line-through;
+        }
+
+        .task-box.unassigned {
+            border-left: 3px solid #ff9800;
+        }
+
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1 onclick="window.location.href='/dashboard'" style="cursor: pointer;">Task Management</h1>
+        <div class="navbar-right">
+            {% if user_token %}
+            <p>USER: {{ user_token.email }}</p>
+            <button id="logged-out">Logout</button>
+            {% else %}
+            <p>USER: Not logged in</p>
+            <a href="/login"><button id="login-button">Login</button></a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="tasks-container">
+        <div class="tasks-header">
+            <div class="board-info">
+                <h2>All Tasks</h2>
+                <span class="task-count">{{ tasks|length }} tasks</span>
+            </div>
+            <div class="board-actions">
+                <button class="back-btn" onclick="window.location.href='/dashboard'">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </button>
+            </div>
+        </div>
+
+        <div class="tasks-grid">
+            {% for task in tasks %}
+            <div class="task-box {% if task.is_completed %}completed{% endif %} {% if not task.assignee %}unassigned{% endif %}" data-task-id="{{ task.id }}">
+                <div class="task-box-header">
+                    <div class="board-badge" onclick="window.location.href='/tasks/{{ task.board_id }}'">
+                        <i class="fas fa-clipboard-list"></i> {{ task.board_name }}
+                    </div>
+                    <div class="task-actions">
+                        <button type="button" onclick="toggleTask('{{ task.board_id }}', '{{ task.id }}')" title="{{ 'Mark as incomplete' if task.is_completed else 'Mark as complete' }}">
+                            <i class="fas {{ 'fa-check-circle' if task.is_completed else 'fa-circle' }}"></i>
+                        </button>
+                        <button type="button" onclick="editTask('{{ task.board_id }}', '{{ task.id }}')" title="Edit task">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" onclick="deleteTask('{{ task.board_id }}', '{{ task.id }}')" title="Delete task">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <h3>{{ task.title }}</h3>
+                <p class="task-description">{{ task.description }}</p>
+                {% if task.due_date %}
+                <div class="task-due-date">
+                    <i class="far fa-calendar"></i>
+                    {{ task.due_date.strftime('%Y-%m-%d') if task.due_date is not string else task.due_date }}
+                </div>
+                {% endif %}
+                {% if task.assignee %}
+                <div class="task-assignee">
+                    <i class="fas fa-user"></i>
+                    {% for user in board_users %}
+                        {% if user.id == task.assignee %}
+                            {{ user.email }}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if task.is_completed %}
+                <div class="task-completed">
+                    <i class="fas fa-check"></i>
+                    Completed on {{ task.completed_at }}
+                </div>
+                {% endif %}
+                <div class="task-status-badge {{ task.status }}">
+                    {{ task.status|title }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        async function toggleTask(boardId, taskId) {
+            try {
+                const response = await fetch(`/task/${boardId}/${taskId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        // Find the task element
+                        const taskElement = document.querySelector(`.task-box[data-task-id="${taskId}"]`);
+                        if (taskElement) {
+                            // Toggle completed class
+                            taskElement.classList.toggle('completed');
+                            
+                            // Update the check icon
+                            const checkIcon = taskElement.querySelector('.task-actions button:first-child i');
+                            if (checkIcon) {
+                                checkIcon.classList.toggle('fa-circle');
+                                checkIcon.classList.toggle('fa-check-circle');
+                            }
+                            
+                            // Update completion status text
+                            let completedDiv = taskElement.querySelector('.task-completed');
+                            if (!completedDiv) {
+                                completedDiv = document.createElement('div');
+                                completedDiv.className = 'task-completed';
+                                taskElement.appendChild(completedDiv);
+                            }
+                            
+                            if (data.is_completed) {
+                                completedDiv.innerHTML = `<i class="fas fa-check"></i> Completed on ${data.completed_at}`;
+                                completedDiv.style.display = 'block';
+                                
+                                // Update status badge
+                                const statusBadge = taskElement.querySelector('.task-status-badge');
+                                if (statusBadge) {
+                                    statusBadge.textContent = 'Done';
+                                    statusBadge.className = 'task-status-badge done';
+                                }
+                            } else {
+                                completedDiv.style.display = 'none';
+                                
+                                // Update status badge
+                                const statusBadge = taskElement.querySelector('.task-status-badge');
+                                if (statusBadge) {
+                                    statusBadge.textContent = 'Todo';
+                                    statusBadge.className = 'task-status-badge todo';
+                                }
+                            }
+                        }
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to update task status');
+                }
+            } catch (error) {
+                alert('Failed to update task status');
+            }
+        }
+
+        function editTask(boardId, taskId) {
+            window.location.href = `/tasks/${boardId}#edit-${taskId}`;
+        }
+
+        async function deleteTask(boardId, taskId) {
+            if (!confirm('Are you sure you want to delete this task?')) return;
+
+            try {
+                const response = await fetch(`/tasks/${boardId}/${taskId}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to delete task');
+                }
+            } catch (error) {
+                alert('Failed to delete task');
+            }
+        }
+    </script>
+</body>
+</html> 

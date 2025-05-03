@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="{{ url_for('static', path='firebase-login.js') }}"></script>
+    <title>Boards</title>
+</head>
+
+<body>
+    <div class="navbar">
+        <h1 onclick="window.location.href='/dashboard'" style="cursor: pointer;">Task Management</h1>
+        <div class="navbar-right">
+            {% if user_token %}
+            <p>USER: {{ user_token.email }}</p>
+            <button id="logged-out">Logout</button>
+            {% else %}
+            <p>USER: Not logged in</p>
+            <a href="/login"><button id="login-button">Login</button></a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="boards-container">
+        <div class="boards-header">
+            <h2>Your Boards</h2>
+            <a href="/add-board"><button class="add-board-btn">Add New Board</button></a>
+        </div>
+
+        <div class="boards-grid">
+            {% if boards %}
+                {% for board in boards %}
+                <div class="board-card" onclick="window.location.href='/tasks/{{ board.id }}'">
+                    <h3>{{ board.name }}</h3>
+                    <p>Created: {{ board.created_at.strftime('%Y-%m-%d') if board.created_at else 'N/A' }}</p>
+                    {% if board.created_by == user_token.user_id %}
+                        <span class="creator-badge" title="You are the creator"><i class="fas fa-crown"></i></span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-columns"></i>
+                    <p>No boards yet. Create your first board to get started!</p>
+                    <a href="/add-board">Create Board</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>
